@@ -1,7 +1,7 @@
 const rootDir = require("../helpers/path");
 const path = require("path");
 const fs = require("fs").promises;
-
+const Cart = require("./cart");
 const p = path.join(rootDir, "data", "products.json");
 
 const getProductsFromFile = async () => {
@@ -52,15 +52,21 @@ module.exports = class Producto {
     try {
       let productos = await getProductsFromFile();
       const prodToDeleteIndex = productos.findIndex(prod => prod.id === id);
-      console.log(prodToDeleteIndex);
-      //console.log(productos[prodToDeleteIndex]);
+      //console.log(prodToDeleteIndex);
       if (prodToDeleteIndex > -1) {
+        let product = productos.find(prod => prod.id === id);
+        console.log("Desde Product.deleteProd");
+        //console.log(product);
         // filter, en este caso, regresa todos los elementos que no coincidan con el id enviado
         let updatedProducts = productos.filter(prod => prod.id !== id);
-        console.log(updatedProducts);
-        //await fs.writeFile(p, JSON.stringify(updatedProducts), err =>
-        //console.log(err);
-        // );
+        fs.writeFile(p, JSON.stringify(updatedProducts))
+          .then(() => {
+            //console.log("JSON SAVED");
+            Cart.deleteProduct(id, product.price);
+          })
+          .catch(err => {
+            console.log(err);
+          });
       } else {
         console.log("ID de Producto no valido");
       }

@@ -7,7 +7,7 @@ const p = path.join(rootDir, "data", "cart.json");
 const getCartsFromFile = async () => {
   try {
     const carts = await fs.readFile(p);
-    console.log("Desde funcion getCartsFromFIle :");
+    //console.log("Desde funcion getCartsFromFIle :");
     return JSON.parse(carts);
   } catch (err) {
     console.log(err);
@@ -19,11 +19,11 @@ module.exports = class Cart {
     // Fetch the previous Cart
     try {
       let cart = await getCartsFromFile();
-      console.log(cart);
+      //console.log(cart);
       if (cart === undefined) {
         cart = { products: [], totalPrice: 0 };
       }
-      console.log(cart);
+      //console.log(cart);
       //Analyze the cart => Find existing product
       const existingProductIndex = cart.products.findIndex(
         prod => prod.id === id
@@ -42,6 +42,31 @@ module.exports = class Cart {
       }
       cart.totalPrice = cart.totalPrice + +productPrice;
       await fs.writeFile(p, JSON.stringify(cart), err => console.log(err));
+    } catch (err) {
+      console.log(err);
+    }
+  }
+
+  static async deleteProduct(id, prodPrice) {
+    try {
+      let cartProducts = await getCartsFromFile();
+      //console.log("desde Cart.deleteProduct");
+      //console.log(cartProducts);
+      if (!cartProducts) {
+        return;
+      }
+      let updatedCart = { ...cartProducts };
+      const product = updatedCart.products.find(prod => prod.id === id);
+      const productQty = product.qty;
+      //console.log(prodPrice);
+      updatedCart.products = updatedCart.products.filter(
+        prod => prod.id !== id
+      );
+      updatedCart.totalPrice = updatedCart.totalPrice - productQty * prodPrice;
+      await fs.writeFile(p, JSON.stringify(updatedCart), err =>
+        console.log(err)
+      );
+      //console.log(updatedCart);
     } catch (err) {
       console.log(err);
     }
