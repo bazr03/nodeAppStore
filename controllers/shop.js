@@ -1,8 +1,21 @@
 const Product = require("../models/product");
 const Cart = require("../models/cart");
 
-exports.getCartProduct = (req, res, next) => {
-  res.render("shop/cart", { pageTitle: "Product Cart", path: "/shop/cart" });
+exports.getCartProduct = async (req, res, next) => {
+  const cart = await Cart.getCart();
+  const products = await Product.fetchAll();
+  const cartProducts = [];
+  for (product of products) {
+    const cartProductData = cart.products.find(prod => prod.id === product.id);
+    if (cartProductData) {
+      cartProducts.push({ productData: product, qty: cartProductData.qty });
+    }
+  }
+  res.render("shop/cart", {
+    pageTitle: "Product Cart",
+    path: "/shop/cart",
+    products: cartProducts
+  });
 };
 
 exports.postCard = async (req, res, next) => {

@@ -71,4 +71,17 @@ module.exports = class Cart {
       console.log(err);
     }
   }
+
+  static async getCart() {
+    try {
+      const cart = await getCartsFromFile();
+      if (cart) {
+        return cart;
+      } else {
+        return null;
+      }
+    } catch (err) {
+      console.log(err);
+    }
+  }
 };
