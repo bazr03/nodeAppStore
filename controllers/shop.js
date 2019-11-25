@@ -25,6 +25,13 @@ exports.postCard = async (req, res, next) => {
   res.redirect("/cart");
 };
 
+exports.postCartDeleteProduct = async (req, res, next) => {
+  const prodId = req.body.productId;
+  const product = await Product.findById(prodId);
+  await Cart.deleteProduct(prodId, product.price);
+  res.redirect("/shop/cart");
+};
+
 exports.getCheckout = (req, res, next) => {
   res.render("/shop/checkout", {
     pageTitle: "Product Checkout",
@@ -32,32 +39,44 @@ exports.getCheckout = (req, res, next) => {
   });
 };
 
-exports.getProducts = async (req, res, next) => {
+exports.getProducts = (req, res, next) => {
   // path root "/" es el default
   //res.sendFile(path.join(rootDir, 'views', 'shop.html'));
   // Product.fetchAll( productos => {
-  //   res.render('shop', {prods:productos, pageTitle:"Shop", path:'/'}); // render utiliza el template enige especificado en app.js (p.ej. ejs)
+  //   res.render('shop', {prods:productos, pageTitle:"Shop", path:'/'}); // render utiliza el template engine especificado en app.js (p.ej. ejs)
   // } );
-  try {
-    const productos = await Product.fetchAll();
+  Product.fetchAll().then(([rows, fieldData]) => {
+    // destructuring
     res.render("shop/product-list", {
-      prods: productos,
+      prods: rows,
       pageTitle: "Product List",
       path: "/shop/product-list"
     });
-  } catch (err) {
-    console.log(err);
-  }
+  });
+  //   .catch( err => console.log(err) );
+  // try {
+  //   const productos = await Product.fetchAll();
+  //   res.render("shop/product-list", {
+  //     prods: productos,
+  //     pageTitle: "Product List",
+  //     path: "/shop/product-list"
+  //   });
+  // } catch (err) {
+  //   console.log(err);
+  // }
 };
 
-exports.getProduct = async (req, res, next) => {
+exports.getProduct = (req, res, next) => {
   const prodID = req.params.productID;
-  const product = await Product.findById(prodID);
-  res.render("shop/product-details", {
-    pageTitle: product.title,
-    path: "/shop/product-list",
-    product: product
-  });
+  Product.findById(prodID)
+    .then(([product]) => {
+      res.render("shop/product-details", {
+        pageTitle: product.title,
+        path: "/shop/product-list",
+        product: product[0]
+      });
+    })
+    .catch(err => console.log(err));
 };
 
 exports.getIndex = (req, res, next) => {

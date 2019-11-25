@@ -57,6 +57,10 @@ module.exports = class Cart {
       }
       let updatedCart = { ...cartProducts };
       const product = updatedCart.products.find(prod => prod.id === id);
+      if (!product) {
+        // Si el producto no esta en el Cart, terminamos este proceso
+        return;
+      }
       const productQty = product.qty;
       //console.log(prodPrice);
       updatedCart.products = updatedCart.products.filter(

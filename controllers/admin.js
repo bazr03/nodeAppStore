@@ -60,26 +60,39 @@ exports.postAddProduct = (req, res, next) => {
   const price = req.body.price;
   const description = req.body.description;
   const product = new Product(null, title, imageUrl, price, description);
-  product.save();
-  res.redirect("/");
+  product
+    .save()
+    .then(() => {
+      res.redirect("/");
+    })
+    .catch(err => console.log(err));
   //res.redirect(path.join(rootDir, 'views' , 'shop.html'));
 };
 
-exports.getProducts = async (req, res, next) => {
+exports.getProducts = (req, res, next) => {
   // path root "/" es el default
   //res.sendFile(path.join(rootDir, 'views', 'shop.html'));
   // Product.fetchAll( productos => {
   //   res.render('shop', {prods:productos, pageTitle:"Shop", path:'/'}); // render utiliza el template enige especificado en app.js (p.ej. ejs)
   // } );
-  try {
-    const productos = await Product.fetchAll();
-    //console.log(productos);
-    res.render("admin/products", {
-      prods: productos,
-      pageTitle: "Productos",
-      path: "/admin/products"
-    });
-  } catch (err) {
-    console.log(err);
-  }
+  Product.fetchAll()
+    .then(([rows, fieldData]) => {
+      res.render("admin/products", {
+        prods: rows,
+        pageTitle: "Productos",
+        path: "/admin/products"
+      });
+    })
+    .catch(err => console.log(err));
+  // try {
+  //   const productos = await Product.fetchAll();
+  //   //console.log(productos);
+  //   res.render("admin/products", {
+  //     prods: productos,
+  //     pageTitle: "Productos",
+  //     path: "/admin/products"
+  //   });
+  // } catch (err) {
+  //   console.log(err);
+  //}
 };
