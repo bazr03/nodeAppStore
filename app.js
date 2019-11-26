@@ -3,10 +3,11 @@ const express = require("express");
 
 const adminRoutes = require("./routes/admin.js");
 const shopRoutes = require("./routes/shop.js");
-
+const Product = require("./models/product");
+const User = require("./models/user");
 const bodyParser = require("body-parser");
 const errorsController = require("./controllers/errors");
-
+const sequelize = require("./helpers/databese");
 const app = express();
 
 app.set("view engine", "ejs");
@@ -28,4 +29,13 @@ app.use(shopRoutes);
 
 app.use("/", errorsController.get404);
 
-app.listen(3000);
+Product.belongsTo(User, { constraints: true, onDelete: "CASCADE" });
+User.hasMany(Product);
+
+sequelize
+  .sync({ force: true }) // Solo usar force:true en desarrollo, xk genera las tablas cada que inicia
+  .then(result => {
+    // console.log(result);
+    app.listen(3000);
+  })
+  .catch(err => console.log(err));

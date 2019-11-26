@@ -45,14 +45,24 @@ exports.getProducts = (req, res, next) => {
   // Product.fetchAll( productos => {
   //   res.render('shop', {prods:productos, pageTitle:"Shop", path:'/'}); // render utiliza el template engine especificado en app.js (p.ej. ejs)
   // } );
-  Product.fetchAll().then(([rows, fieldData]) => {
-    // destructuring
-    res.render("shop/product-list", {
-      prods: rows,
-      pageTitle: "Product List",
-      path: "/shop/product-list"
-    });
-  });
+  Product.findAll()
+    .then(products => {
+      res.render("shop/product-list", {
+        prods: products,
+        pageTitle: "Product List",
+        path: "/shop/product-list"
+      });
+    })
+    .catch(err => console.log(err));
+
+  // Product.fetchAll().then(([rows, fieldData]) => {
+  //   // destructuring
+  //   res.render("shop/product-list", {
+  //     prods: rows,
+  //     pageTitle: "Product List",
+  //     path: "/shop/product-list"
+  //   });
+  // });
   //   .catch( err => console.log(err) );
   // try {
   //   const productos = await Product.fetchAll();
@@ -68,12 +78,12 @@ exports.getProducts = (req, res, next) => {
 
 exports.getProduct = (req, res, next) => {
   const prodID = req.params.productID;
-  Product.findById(prodID)
-    .then(([product]) => {
+  Product.findByPk(prodID)
+    .then(product => {
       res.render("shop/product-details", {
         pageTitle: product.title,
         path: "/shop/product-list",
-        product: product[0]
+        product: product
       });
     })
     .catch(err => console.log(err));

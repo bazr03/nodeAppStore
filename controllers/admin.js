@@ -8,26 +8,39 @@ exports.getAddProduct = (req, res, next) => {
   });
 };
 
-exports.getEditProduct = async (req, res, next) => {
+exports.getEditProduct = (req, res, next) => {
   const editMode = req.query.edit;
   if (!editMode) {
     return res.redirect("/");
   }
   const prodId = req.params.productId;
-  try {
-    product = await Product.findById(prodId);
-    if (!product) {
-      return res.redirect("/");
-    }
-    res.render("admin/edit-product", {
-      pageTitle: "Editar producto",
-      path: "/admin/edit-product",
-      editing: editMode,
-      product: product
-    });
-  } catch (err) {
-    console.log(err);
-  }
+  Product.findByPk(prodId)
+    .then(product => {
+      if (!product) {
+        return res.redirect("/");
+      }
+      res.render("admin/edit-product", {
+        pageTitle: "Editar producto",
+        path: "/admin/edit-product",
+        editing: editMode,
+        product: product.dataValues
+      });
+    })
+    .catch(err => console.log(err));
+  // try {
+  //   product = await Product.findById(prodId);
+  //   if (!product) {
+  //     return res.redirect("/");
+  //   }
+  //   res.render("admin/edit-product", {
+  //     pageTitle: "Editar producto",
+  //     path: "/admin/edit-product",
+  //     editing: editMode,
+  //     product: product
+  //   });
+  // } catch (err) {
+  //   console.log(err);
+  // }
 };
 
 exports.postEditProduct = (req, res, next) => {
@@ -36,22 +49,42 @@ exports.postEditProduct = (req, res, next) => {
   const updatedPrice = req.body.price;
   const updatedImageUrl = req.body.imageUrl;
   const updatedDescription = req.body.description;
-  const updatedProduct = new Product(
-    prodId,
-    updatedTitle,
-    updatedImageUrl,
-    updatedDescription,
-    updatedPrice
-  );
-  updatedProduct.save();
-  res.redirect("/admin/products");
+  Product.findByPk(prodId)
+    .then(product => {
+      product.title = updatedTitle;
+      product.price = updatedPrice;
+      product.imageUrl = updatedImageUrl;
+      product.description = updatedDescription;
+      return product.save(); // para guardarlo a la base de datos, agregamos return
+      // para manejar la promesa regresado por save desde fuera y no nestear el codigo
+    })
+    .then(result => {
+      console.log("Updated Product");
+      res.redirect("/admin/products");
+    })
+    .catch(err => console.log(err));
+  // const updatedProduct = new Product(
+  //   prodId,
+  //   updatedTitle,
+  //   updatedImageUrl,
+  //   updatedDescription,
+  //   updatedPrice
+  // );
+  // updatedProduct.save();
 };
 
 exports.postDeleteProd = (req, res, next) => {
   const prodId = req.body.productId;
-  //console.log(prodId);
-  Product.deleteProd(prodId);
-  res.redirect("/admin/products");
+  Product.findByPk(prodId)
+    .then(product => {
+      return product.destroy();
+    })
+    .then(result => {
+      console.log("PRODUCT DESTROYED");
+      res.redirect("/admin/products");
+    })
+    .catch(err => console.log(err));
+  //Product.deleteProd(prodId);
 };
 
 exports.postAddProduct = (req, res, next) => {
@@ -59,13 +92,24 @@ exports.postAddProduct = (req, res, next) => {
   const imageUrl = req.body.imageUrl;
   const price = req.body.price;
   const description = req.body.description;
-  const product = new Product(null, title, imageUrl, price, description);
-  product
-    .save()
+  Product.create({
+    title: title,
+    price: price,
+    imageUrl: imageUrl,
+    description: description
+  })
     .then(() => {
+      console.log("Product Created");
       res.redirect("/");
     })
     .catch(err => console.log(err));
+  //const product = new Product(null, title, imageUrl, price, description);
+  // product
+  //   .save()
+  //   .then(() => {
+  //     res.redirect("/");
+  //   })
+  //   .catch(err => console.log(err));
   //res.redirect(path.join(rootDir, 'views' , 'shop.html'));
 };
 
@@ -75,15 +119,24 @@ exports.getProducts = (req, res, next) => {
   // Product.fetchAll( productos => {
   //   res.render('shop', {prods:productos, pageTitle:"Shop", path:'/'}); // render utiliza el template enige especificado en app.js (p.ej. ejs)
   // } );
-  Product.fetchAll()
-    .then(([rows, fieldData]) => {
+  Product.findAll()
+    .then(products => {
       res.render("admin/products", {
-        prods: rows,
+        prods: products,
         pageTitle: "Productos",
         path: "/admin/products"
       });
     })
     .catch(err => console.log(err));
+  // Product.fetchAll()
+  //   .then(([rows, fieldData]) => {
+  //     res.render("admin/products", {
+  //       prods: rows,
+  //       pageTitle: "Productos",
+  //       path: "/admin/products"
+  //     });
+  //   })
+  //   .catch(err => console.log(err));
   // try {
   //   const productos = await Product.fetchAll();
   //   //console.log(productos);
