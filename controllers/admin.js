@@ -14,8 +14,13 @@ exports.getEditProduct = (req, res, next) => {
     return res.redirect("/");
   }
   const prodId = req.params.productId;
-  Product.findByPk(prodId)
-    .then(product => {
+  req.user
+    .getProducts({ where: { id: prodId } })
+    //Product.findByPk(prodId)
+    .then(products => {
+      // getProducts siempre regresa un arreglo, aun cuando solo
+      // tiene un elemento
+      const product = products[0]; // en este caso sabemos que nuestra busqueda siempre este en el primero
       if (!product) {
         return res.redirect("/");
       }
@@ -92,17 +97,29 @@ exports.postAddProduct = (req, res, next) => {
   const imageUrl = req.body.imageUrl;
   const price = req.body.price;
   const description = req.body.description;
-  Product.create({
-    title: title,
-    price: price,
-    imageUrl: imageUrl,
-    description: description
-  })
+  req.user
+    .createProduct({
+      title: title,
+      price: price,
+      imageUrl: imageUrl,
+      description: description
+    })
     .then(() => {
       console.log("Product Created");
       res.redirect("/");
     })
     .catch(err => console.log(err));
+  // Product.create({
+  //   title: title,
+  //   price: price,
+  //   imageUrl: imageUrl,
+  //   description: description
+  // })
+  //   .then(() => {
+  //     console.log("Product Created");
+  //     res.redirect("/");
+  //   })
+  //   .catch(err => console.log(err));
   //const product = new Product(null, title, imageUrl, price, description);
   // product
   //   .save()
@@ -119,7 +136,9 @@ exports.getProducts = (req, res, next) => {
   // Product.fetchAll( productos => {
   //   res.render('shop', {prods:productos, pageTitle:"Shop", path:'/'}); // render utiliza el template enige especificado en app.js (p.ej. ejs)
   // } );
-  Product.findAll()
+  req.user
+    .getProducts()
+    //Product.findAll()
     .then(products => {
       res.render("admin/products", {
         prods: products,

@@ -1,7 +1,7 @@
 //const path = require('path');
 //const rootDir = require('../helpers/path');
 
-const productsController = require("../controllers/admin");
+const productsController = require("../controllers/adminMDB");
 const express = require("express");
 
 const router = express.Router();
@@ -15,11 +15,11 @@ const router = express.Router();
 router.get("/add-product", productsController.getAddProduct);
 // /admin/add-product => POST
 router.post("/add-product", productsController.postAddProduct);
-router.get("/products", productsController.getProducts);
+// router.get("/products", productsController.getProducts);
 
-router.get("/edit-product/:productId", productsController.getEditProduct);
-router.post("/edit-product", productsController.postEditProduct);
-router.post("/delete-product", productsController.postDeleteProd);
+// router.get("/edit-product/:productId", productsController.getEditProduct);
+// router.post("/edit-product", productsController.postEditProduct);
+// router.post("/delete-product", productsController.postDeleteProd);
 
 module.exports = router;
 

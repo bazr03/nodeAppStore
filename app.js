@@ -3,12 +3,12 @@ const express = require("express");
 
 const adminRoutes = require("./routes/admin.js");
 const shopRoutes = require("./routes/shop.js");
-const Product = require("./models/product");
 const User = require("./models/user");
+
 const bodyParser = require("body-parser");
 const errorsController = require("./controllers/errors");
-const sequelize = require("./helpers/databese");
 const app = express();
+const mongoConnect = require("./helpers/mongoDB").mongoConnect;
 
 app.set("view engine", "ejs");
 app.set("views", "views"); // views es el de defualt, se pone solo por si el usuario utiliza otro nombre
@@ -24,18 +24,23 @@ app.set("views", "views"); // views es el de defualt, se pone solo por si el usu
 app.use(bodyParser.urlencoded({ extended: false })); // debe ir antes de cualquier middleware con un path
 app.use(express.static(path.join(__dirname, "public")));
 
+app.use((req, res, next) => {
+  // Todos los middlewares se ejectan solo cuando hay un request
+  // User.findByPk(1)
+  //   .then(user => {
+  //     req.user = user; // podemos agrarg cualquir campo al request, solo asegurarse de no
+  //     // sobrescribir uno existente, p.ej. body
+  //     next();
+  // })
+  // .catch(err => console.log(err)); // no cuando se ejectuta npm start
+  next();
+});
+
 app.use("/admin", adminRoutes);
-app.use(shopRoutes);
+// app.use(shopRoutes);
 
 app.use("/", errorsController.get404);
 
-Product.belongsTo(User, { constraints: true, onDelete: "CASCADE" });
-User.hasMany(Product);
-
-sequelize
-  .sync({ force: true }) // Solo usar force:true en desarrollo, xk genera las tablas cada que inicia
-  .then(result => {
-    // console.log(result);
-    app.listen(3000);
-  })
-  .catch(err => console.log(err));
+mongoConnect(() => {
+  app.listen(3000);
+});
