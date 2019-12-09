@@ -3,7 +3,7 @@ const express = require("express");
 
 const adminRoutes = require("./routes/admin.js");
 const shopRoutes = require("./routes/shop.js");
-const User = require("./models/user");
+const User = require("./models/userMDB");
 
 const bodyParser = require("body-parser");
 const errorsController = require("./controllers/errors");
@@ -26,21 +26,22 @@ app.use(express.static(path.join(__dirname, "public")));
 
 app.use((req, res, next) => {
   // Todos los middlewares se ejectan solo cuando hay un request
-  // User.findByPk(1)
-  //   .then(user => {
-  //     req.user = user; // podemos agrarg cualquir campo al request, solo asegurarse de no
-  //     // sobrescribir uno existente, p.ej. body
-  //     next();
-  // })
-  // .catch(err => console.log(err)); // no cuando se ejectuta npm start
-  next();
+  //console.log("Iniciando consulta a MongoDb");
+  User.findById("5de9d8298b25541d12671bab")
+    .then(user => {
+      req.user = new User(user.username, user.email, user.cart, user._id);
+      //console.log(user);
+      next();
+    })
+    .catch(err => console.log(err)); // no cuando se ejectuta npm start
 });
 
 app.use("/admin", adminRoutes);
-// app.use(shopRoutes);
+app.use(shopRoutes);
 
 app.use("/", errorsController.get404);
 
 mongoConnect(() => {
+  console.log("Servidor iniciado en el puerto 3000");
   app.listen(3000);
 });
