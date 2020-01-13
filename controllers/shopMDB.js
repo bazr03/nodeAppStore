@@ -1,10 +1,12 @@
 const Product = require("../models/productMDB");
-//const Cart = require("../models/cart");
+const Order = require("../models/orderMDB");
 
 exports.getCartProduct = (req, res, next) => {
   req.user
-    .getCart()
-    .then(products => {
+    .populate("cart.items.productId") // este no regresa una promesa
+    .execPopulate() // se ejecuta para obtener una promesa
+    .then(user => {
+      const products = user.cart.items;
       res.render("shop/cart", {
         pageTitle: "Product Cart",
         path: "/shop/cart",
@@ -30,7 +32,7 @@ exports.postCard = (req, res, next) => {
 exports.postCartDeleteProduct = (req, res, next) => {
   const prodId = req.body.productId;
   req.user
-    .deleteItemFromCart(prodId)
+    .removeFromCart(prodId)
     .then(() => {
       res.redirect("/cart");
     })
@@ -45,7 +47,7 @@ exports.postCartDeleteProduct = (req, res, next) => {
 // };
 
 exports.getProducts = (req, res, next) => {
-  Product.fetchAll()
+  Product.find()
     //Product.findAll()
     .then(products => {
       res.render("shop/product-list", {
@@ -71,7 +73,10 @@ exports.getProduct = (req, res, next) => {
 };
 
 exports.getIndex = (req, res, next) => {
-  res.render("shop/index", { pageTitle: "Home", path: "/index" });
+  res.render("shop/index", {
+    pageTitle: "Home",
+    path: "/index"
+  });
 };
 
 // exports.getCheckoutPage = (req, res, next) => {
@@ -81,46 +86,40 @@ exports.getIndex = (req, res, next) => {
 //   });
 // };
 
-// exports.getOrdersPage = (req, res, next) => {
-//   req.user
-//     .getOrders({ include: ["products"] })
-//     .then(orders => {
-//       res.render("shop/orders", {
-//         pageTitle: "Your Orders",
-//         path: "/shop/orders",
-//         orders: orders
-//       });
-//     })
-//     .catch(err => console.log(err));
-// };
+exports.getOrdersPage = (req, res, next) => {
+  Order.find({ "user.userId": req.user._id })
+    .then(orders => {
+      res.render("shop/orders", {
+        pageTitle: "Your Orders",
+        path: "/shop/orders",
+        orders: orders
+      });
+    })
+    .catch(err => console.log(err));
+};
 
-// exports.postOrder = (req, res, next) => {
-//   let fetchedCart;
-//   req.user
-//     .getCart()
-//     .then(cart => {
-//       fetchedCart = cart;
-//       return cart.getProducts();
-//     })
-//     .then(products => {
-//       return req.user
-//         .createOrder()
-//         .then(order => {
-//           return order.addProducts(
-//             products.map(product => {
-//               product.orderItem = { quantity: product.cartItem.quantity };
-//               return product;
-//             })
-//           );
-//         })
-//         .catch(err => console.log(err));
-//     })
-//     .then(() => {
-//       fetchedCart.setProducts(null);
-//     })
-//     .then(() => {
-//       res.redirect("/orders");
-//     })
-//     .catch(err => console.log(err));
-//
-// };
+exports.postOrder = (req, res, next) => {
+  req.user
+    .populate("cart.items.productId")
+    .execPopulate()
+    .then(user => {
+      const products = user.cart.items.map(i => {
+        return { quantity: i.quantity, product: { ...i.productId._doc } };
+      });
+      const order = new Order({
+        user: {
+          name: req.user.name,
+          userId: req.user // mongoose se encarga de extraer ek Id
+        },
+        products: products
+      });
+      return order.save();
+    })
+    .then(() => {
+      return req.user.clearCart();
+    })
+    .then(() => {
+      res.redirect("/orders");
+    })
+    .catch(err => console.log(err));
+};
