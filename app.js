@@ -1,3 +1,5 @@
+require("dotenv").config();
+
 const path = require("path");
 const express = require("express");
 const mongoose = require("mongoose"); // al usar mongoose ya no es necesario usar el
@@ -16,9 +18,6 @@ const bodyParser = require("body-parser");
 const app = express();
 //const mongoConnect = require("./helpers/mongoDB").mongoConnect;
 
-const MONGODB_URI =
-  "mongodb+srv://ibazaldua:PfzCZQEPwo439Mqa@cluster0-ekgux.mongodb.net/shop";
-
 const csrfProtection = csrf();
 
 app.set("view engine", "ejs");
@@ -32,7 +31,7 @@ app.set("views", "views"); // views es el de defualt, se pone solo por si el usu
 //     next(); // permite pasar al siguiente middleware
 // } );
 const store = new MongoDbSessionStore({
-  uri: MONGODB_URI,
+  uri: process.env.MONGODB_URI,
   collection: "sessions"
 });
 
@@ -56,10 +55,17 @@ app.use((req, res, next) => {
   }
   User.findById(req.session.user._id)
     .then(user => {
+      if (!user) {
+        return next();
+        // asegurarse de no guardar la sesion si el usuario no se
+        // encuentra en la base de datos
+      }
       req.user = user;
       next();
     })
-    .catch(err => console.log(err));
+    .catch(err => {
+      throw new Error(err);
+    });
 });
 // app.use((req, res, next) => {
 //   //Todos los middlewares se ejectan solo cuando hay un request
@@ -89,9 +95,10 @@ app.use("/", errorsController.get404);
 //   console.log("Servidor iniciado en el puerto 3000");
 //   app.listen(3000);
 // });
-
+//console.log(process.env);
+const PORT = process.env.PORT || 3000;
 mongoose
-  .connect(MONGODB_URI)
+  .connect(process.env.MONGODB_URI)
   .then(() => {
     // User.findOne().then(user => {
     //   if (!user) {
@@ -105,7 +112,8 @@ mongoose
     //     user.save();
     //   }
     // });
-    console.log("Servidor iniciado en el puerto 3000");
-    app.listen(3000);
+    app.listen(PORT, () => {
+      console.log(`Servidor iniciado en el puerto ${PORT}`);
+    });
   })
   .catch(err => console.log(err));

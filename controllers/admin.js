@@ -136,8 +136,11 @@ exports.getProducts = (req, res, next) => {
   // Product.fetchAll( productos => {
   //   res.render('shop', {prods:productos, pageTitle:"Shop", path:'/'}); // render utiliza el template enige especificado en app.js (p.ej. ejs)
   // } );
-  req.user
-    .getProducts()
+  //req.user
+  //.getProducts()
+  Product.find({ userId: req.user._id }) // regresa solo los productos
+    // creados por el usuario, ya que estamos en una pagina de administracion
+    // no tiene caso mostrar todos los productos
     //Product.findAll()
     .then(products => {
       res.render("admin/products", {
