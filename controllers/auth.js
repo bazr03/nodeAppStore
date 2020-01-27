@@ -104,7 +104,11 @@ exports.postLogin = (req, res, next) => {
         })
         .catch(err => console.log(err));
     })
-    .catch(err => console.log(err));
+    .catch(err => {
+      const error = new Error(err);
+      error.httpStatusCode = 500;
+      return next(error);
+    });
 };
 
 exports.postLogout = (req, res, next) => {
@@ -155,7 +159,11 @@ exports.postSignup = (req, res, next) => {
           subject: "Signup Succeded!",
           html: "<h1>Congratulations! You sucessfully signed up!</h1>"
         })
-        .catch(err => console.log(err));
+        .catch(err => {
+          const error = new Error(err);
+          error.httpStatusCode = 500;
+          return next(error);
+        });
     });
 };
 
@@ -204,7 +212,11 @@ exports.postReset = (req, res, next) => {
               `
         });
       })
-      .catch(err => console.log(err));
+      .catch(err => {
+        const error = new Error(err);
+        error.httpStatusCode = 500;
+        return next(error);
+      });
   });
 };
 
@@ -226,7 +238,11 @@ exports.getNewPassword = (req, res, next) => {
         passwordToken: token
       });
     })
-    .catch(err => console.log(err));
+    .catch(err => {
+      const error = new Error(err);
+      error.httpStatusCode = 500;
+      return next(error);
+    });
   // FindONe que cumple 2 condiciones, que el token sea el mismo y que
   // la fecha de expiracion guardada en la base de datos sea mayor ($gt =  greater then,
   // operador de mondodb) que la fecha en la cual se hace el intento de cambiar la contra
@@ -258,5 +274,9 @@ exports.postNewPassword = (req, res, next) => {
       // aqui se podria enviar un email confirmando
       // el reseteo del password
     })
-    .catch(err => console.log(err));
+    .catch(err => {
+      const error = new Error(err);
+      error.httpStatusCode = 500;
+      return next(error);
+    });
 };

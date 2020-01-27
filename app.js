@@ -13,12 +13,34 @@ const session = require("express-session");
 const MongoDbSessionStore = require("connect-mongodb-session")(session);
 const csrf = require("csurf");
 const flash = require("connect-flash");
+const multer = require("multer");
 
 const bodyParser = require("body-parser");
 const app = express();
 //const mongoConnect = require("./helpers/mongoDB").mongoConnect;
 
 const csrfProtection = csrf();
+const fileStorage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, "images"); // el primer argumento (null) indica si hubo algun error y no se debe
+    // guardar el archivo
+  },
+  filename: (req, file, cb) => {
+    cb(null, new Date().toISOString() + "-" + file.originalname); // originalname incluye la extension del archivo
+  }
+});
+
+const fileFilter = (req, file, cb) => {
+  if (
+    file.mimetype === "image/jpg" ||
+    file.mimetype === "image/png" ||
+    file.mimetype === "image/jpeg"
+  ) {
+    cb(null, true);
+  } else {
+    cb(null, false);
+  }
+};
 
 app.set("view engine", "ejs");
 app.set("views", "views"); // views es el de defualt, se pone solo por si el usuario utiliza otro nombre
@@ -36,7 +58,15 @@ const store = new MongoDbSessionStore({
 });
 
 app.use(bodyParser.urlencoded({ extended: false })); // debe ir antes de cualquier middleware con un path
+app.use(
+  multer({ storage: fileStorage, fileFilter: fileFilter }).single("image")
+); // el nombre image debe coincider con el asignado al input type='file' definido en el form
 app.use(express.static(path.join(__dirname, "public")));
+app.use("/images", express.static(path.join(__dirname, "images")));
+// por defualt express sirve la imagenes como si estuvieran en el directorio raiz
+// p.ej /image01.png, pero no queremos eso , queremos mantener la estructura de folders
+// tons agremas /images al al principio para que express las sirva como
+// /images/image01.png
 app.use(
   session({
     secret: "my secret",
@@ -48,6 +78,12 @@ app.use(
 
 app.use(csrfProtection);
 app.use(flash());
+
+app.use((req, res, next) => {
+  res.locals.isAuthenticated = req.session.isLoggedIn;
+  res.locals.csrfToken = req.csrfToken();
+  next();
+});
 
 app.use((req, res, next) => {
   if (!req.session.user) {
@@ -64,7 +100,8 @@ app.use((req, res, next) => {
       next();
     })
     .catch(err => {
-      throw new Error(err);
+      next(new Error(err));
+      // throw new Error(err);
     });
 });
 // app.use((req, res, next) => {
@@ -79,17 +116,25 @@ app.use((req, res, next) => {
 //     .catch(err => console.log(err)); // no cuando se ejectuta npm start
 // });
 
-app.use((req, res, next) => {
-  res.locals.isAuthenticated = req.session.isLoggedIn;
-  res.locals.csrfToken = req.csrfToken();
-  next();
-});
-
 app.use("/admin", adminRoutes);
 app.use(shopRoutes);
 app.use(authRoutes);
 
+app.get("/500", errorsController.get500);
+
 app.use("/", errorsController.get404);
+
+app.use((error, req, res, next) => {
+  //res.status(error.httpStatusCode).render(...);
+  //res.redirect("/500");
+  // console.log("Error enviado desde middleware error");
+  // console.log("Sesion = " + req);
+  res.status(500).render("500", {
+    pageTitle: "Error!",
+    path: "/500",
+    isAuthenticated: req.session.isLoggedIn
+  });
+});
 
 // mongoConnect(() => {
 //   console.log("Servidor iniciado en el puerto 3000");

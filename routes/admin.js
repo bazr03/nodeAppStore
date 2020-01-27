@@ -25,8 +25,9 @@ router.post(
       //.withMessage("Only alphanumeric characters are permited!")
       .isLength({ max: 150, min: 3 })
       .withMessage("Title lenght should not be longer than 150 characters")
+      .not()
+      .isEmpty()
       .trim(),
-    body("imageUrl").isURL(),
     body("price")
       .isNumeric()
       .withMessage("Price must be a number!"),
@@ -56,9 +57,7 @@ router.post(
       )
       .not()
       .isEmpty()
-      .trim()
-      .escape(),
-    body("imageUrl").isURL(),
+      .trim(),
     body("price")
       .isNumeric()
       .withMessage("Price must be a number!"),
